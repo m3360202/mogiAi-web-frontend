@@ -1,0 +1,53 @@
+steps:
+  # Build the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      [
+        'build',
+        '-t',
+        'asia-northeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/web-frontend/mogi-web-frontend:$BUILD_ID',
+        '-f',
+        'Dockerfile',
+        '.'
+      ]
+
+  # Push the container image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/web-frontend/mogi-web-frontend:$BUILD_ID']
+
+  # Deploy container image to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'mogi-web-frontend'
+      - '--image'
+      - 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/web-frontend/mogi-web-frontend:$BUILD_ID'
+      - '--region'
+      - 'asia-northeast1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--port'
+      - '8080'
+      - '--memory'
+      - '1Gi'
+      - '--cpu'
+      - '1'
+      - '--min-instances'
+      - '0'
+      - '--max-instances'
+      - '2'
+      - '--timeout'
+      - '300'
+      - '--cpu-boost'
+      - '--set-env-vars'
+      - 'NODE_ENV=production'
+
+images:
+  - 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/web-frontend/mogi-web-frontend:$BUILD_ID'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
